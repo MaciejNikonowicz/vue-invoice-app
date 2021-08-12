@@ -1,45 +1,59 @@
 <template>
-  <div>
+  <div v-if="invoicesLoaded">
     <div v-if="!mobile" class="app flex flex-column">
       <Navigation />
       <div class="app-content flex flex-column">
-          <router-view />
+        <Modal v-if="modalActive" />
+        <transition name="invoice">
+          <InvoiceModal v-if="invoiceModal" />
+        </transition>
+        <router-view />
       </div>
     </div>
     <div v-else class="mobile-message flex flex-column">
-      <h2>Sorry, This App is not suppoerted on Mobile Devices</h2>
-      <p>To use this app, please use a computer or tablet</p>
+      <h2>Sorry, this app is not supported on Mobile Devices</h2>
+      <p>To use this app, please use a computer or Tablet</p>
     </div>
   </div>
 </template>
 
 <script>
-import Navigation from './components/Navigation.vue'
+import { mapState, mapActions } from "vuex";
+import Navigation from "./components/Navigation";
+import InvoiceModal from "./components/InvoiceModal";
+import Modal from "./components/Modal";
+export default {
+  data() {
+    return {
+      mobile: null,
+    };
+  },
+  components: {
+    Navigation,
+    InvoiceModal,
+    Modal,
+  },
+  created() {
+    this.GET_INVOICES();
+    this.checkScreen();
+    window.addEventListener("resize", this.checkScreen);
+  },
+  methods: {
+    ...mapActions(["GET_INVOICES"]),
 
-  export default {
-    data() {
-      return {
-        mobile: null
+    checkScreen() {
+      const windowWidth = window.innerWidth;
+      if (windowWidth <= 750) {
+        this.mobile = true;
+        return;
       }
+      this.mobile = false;
     },
-    components: {
-      Navigation
-    },
-    created() {
-      this.checkScreen();
-      window.addEventListener("resize", this.checkScreen);
-    },
-    methods: {
-      checkScreen() {
-        const windowWidth = window.innerWidth;
-        if(windowWidth <= 750) {
-          this.mobile = true;
-          return;
-        }
-        this.mobile = false;
-      }
-    }
-  }
+  },
+  computed: {
+    ...mapState(["invoiceModal", "modalActive", "invoicesLoaded"]),
+  },
+};
 </script>
 
 <style lang="scss">
@@ -55,9 +69,8 @@ import Navigation from './components/Navigation.vue'
 .app {
   background-color: #141625;
   min-height: 100vh;
-  
-  @media(min-width: 900px) {
-    flex-direction: row  !important;
+  @media (min-width: 900px) {
+    flex-direction: row !important;
   }
 
   .app-content {
@@ -78,6 +91,18 @@ import Navigation from './components/Navigation.vue'
   p {
     margin-top: 16px;
   }
+}
+
+// animated invoice
+
+.invoice-enter-active,
+.invoice-leave-active {
+  transition: 0.8s ease all;
+}
+
+.invoice-enter-from,
+.invoice-leave-to {
+  transform: translateX(-700px);
 }
 
 button,
